@@ -1,0 +1,17 @@
+{
+  "name": "PMZ Agent",
+  "short_name": "PMZ",
+  "description": "Your description here",
+  "start_url": "/",
+  "display": "fullscreen",
+  "background_color": "#1f2937",
+  "theme_color": "#1f2937",
+  "orientation": "portrait",
+  "prefer_related_applications": false,
+  "scope": "/",
+  "permissions": [],
+  "splash_pages": null,
+  "shortcuts": [],
+  "categories": [],
+  "iarc_rating_id": null
+}

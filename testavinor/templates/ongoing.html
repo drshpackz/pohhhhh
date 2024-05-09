@@ -1,0 +1,53 @@
+{% if flights.ongoing %}
+    <!-- Ongoing Flights Table -->
+    <div class="py-4">
+        <h3 class="font-semibold text-gray-700 text-lg pl-4">Ongoing Flights</h3>
+        <div class="overflow-x-auto rounded-lg shadow">
+            <table class="w-full text-sm text-left text-gray-500 divide-y divide-gray-200">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-800">
+                    <tr>
+                        <th scope="col" class="px-6 py-3">Flight</th>
+                        <th scope="col" class="px-6 py-3">Scheduled</th>
+                        <th scope="col" class="px-6 py-3">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-300">
+                    {% for flight in flights.ongoing %}
+                    <tr>
+                        <td class="px-6 py-4">
+                            <div class="font-medium text-gray-900">{{ flight.flight_id }}</div>
+                            <div class="text-gray-500">{{ flight.airport }}</div>
+                            <div>G: {{ flight.gate }} / P: {{ flight.gate_number }}</div>
+                            <div class="{{ 'text-red-500' if flight.status == 'Time Out' else 'text-gray-500' }}">S: {{ flight.status }}</div>
+                            <span id="bag-delivered-{{ flight.flight_id }}" class="text-red-500">{{ session.get('delivered_' + flight.flight_id, 0) }}</span> /
+                            <span id="bag-count-{{ flight.flight_id }}" class="text-green-500">{{ session.get(flight.flight_id, 0) }}</span>
+                        </td>
+                        <td class="px-6 py-4 space-y-1">
+                            <div class="flex items-center text-sm font-semibold text-blue-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 fill-current" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-7-13h-2v6h2.5l3.5 2.1.5-.8-3-1.8V6z"/></svg>
+                                {{ flight.schedule_day }}
+                            </div>
+                            <div class="text-md font-medium text-gray-800">
+                                {{ flight.schedule_time }}
+                            </div>
+                            <div class="flex items-center text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 fill-current" viewBox="0 0 20 20"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 110-12 6 6 0 010 12zm1-9H9v4h2V7zm-2 4V9h2v2h-2z"/></svg>
+                                <span class="{{ 'text-red-500' if flight.hours_to_left == '00:00' else 'text-gray-500' }}">
+                                    {{ flight.hours_to_left }}
+                                </span>
+                            </div>
+                        </td>
+                        
+                        <td class="px-6 py-4">
+                            <button class="text-gray-600 bg-gray-100 hover:bg-gray-200 rounded py-2 px-4">...</button>
+                            <!-- Placeholder for dropdown actions -->
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% else %}
+    <div class="py-4 text-center text-gray-700">No ongoing flights available.</div>
+{% endif %}

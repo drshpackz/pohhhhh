@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Airport Gate Layout</title>
+<style>
+  body { font-family: Arial, sans-serif; }
+  .airport-layout { display: grid; grid-template-columns: repeat(12, 1fr); grid-gap: 5px; max-width: 600px; margin: 20px auto; }
+  .gate { height: 40px; display: flex; align-items: center; justify-content: center; background-color: #ccc; }
+  .domestic { background-color: #add8e6; }
+  .international { background-color: #ffcc00; }
+  .belt { background-color: #ddd; grid-column: span 3; }
+  .ramp { background-color: #bba; grid-column: span 12; }
+  .selected { border: 2px solid red; }
+</style>
+</head>
+<body>
+<h2>Airport Gate Layout</h2>
+<div class="airport-layout">
+  <!-- Example Row 1 -->
+  <div class="gate domestic">D1</div>
+  <div class="gate domestic">D2</div>
+  <div class="gate domestic">D3</div>
+  <div class="gate international">I1</div>
+  <div class="gate international">I2</div>
+  <div class="gate selected">C1</div>
+  <div class="gate">C2</div>
+  <div class="gate">C3</div>
+  <div class="gate">C4</div>
+  <div class="gate">C5</div>
+  <div class="gate">C6</div>
+  <div class="gate">C7</div>
+  <!-- Additional rows should be added below with similar structure -->
+  <!-- Example Conveyor Belts -->
+  <div class="belt">Belt 1</div>
+  <div class="belt">Belt 2</div>
+  <div class="belt">Belt 3</div>
+  <!-- Example Ramp -->
+  <div class="ramp">Ramp</div>
+</div>
+</body>
+</html>

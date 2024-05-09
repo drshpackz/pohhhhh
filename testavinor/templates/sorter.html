@@ -1,0 +1,33 @@
+<!-- Form with a compact and unique design -->
+<form action="/" method="get" class="bg-gray-50 shadow-md rounded-xl p-6">
+    <h3 class="text-lg font-bold text-center text-blue-800 mb-4">
+        Filter Flights
+    </h3>
+    <div class="flex items-center gap-2 p-2 bg-white rounded-md shadow">
+        <!-- Custom icon for flight type -->
+        <div class="p-1 rounded-full bg-blue-500 text-white">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        </div>
+        <label for="flight_type" class="font-medium text-gray-700">Flight Type:</label>
+        <select name="flight_type" onchange="this.form.submit()" class="flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-300 focus:ring-opacity-50">
+            <option value="A">All</option>
+            <option value="D" {% if request.args.get('flight_type') == 'D' %}selected{% endif %}>Domestic</option>
+            <option value="I" {% if request.args.get('flight_type') == 'I' %}selected{% endif %}>International</option>
+            <option value="S" {% if request.args.get('flight_type') == 'S' %}selected{% endif %}>Schengen</option>
+            <option value="x" {% if request.args.get('flight_type') == 'x' %}selected{% endif %}>International + Schengen</option>
+        </select>
+    </div>
+    <!-- New sorting dropdown -->
+    <div class="flex items-center gap-2 p-2 bg-white rounded-md shadow">
+        <!-- Custom icon for sorting -->
+        <div class="p-1 rounded-full bg-green-500 text-white">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </div>
+        <label for="sort_by" class="font-medium text-gray-700">Sort By User:</label>
+        <select name="sort_by" onchange="this.form.submit()" class="flex-grow rounded-md border-gray-300 shadow-sm focus:border-green-300 focus:ring focus:ring-green-300 focus:ring-opacity-50">
+            <option value="oversize" {% if request.args.get('sort_by') == 'oversize' %}selected{% endif %}>Oversize Section</option>
+            <option value="outdriver" {% if request.args.get('sort_by') == 'outdriver' %}selected{% endif %}>Out Driver</option>
+
+        </select>
+    </div>
+</form>
