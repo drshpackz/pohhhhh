@@ -1,0 +1,56 @@
+<div class="zoom-controls">
+    <button onclick="zoomIn()">Zoom In</button>
+    <button onclick="zoomOut()">Zoom Out</button>
+    <button onclick="resetZoom()">Reset</button>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if a saved zoom level exists in local storage and apply it
+        if (localStorage.getItem('zoomLevel')) {
+            baseFontSize = parseInt(localStorage.getItem('zoomLevel'));
+            document.documentElement.style.fontSize = baseFontSize + 'px';
+        }
+    });
+
+    // Initial font size in pixels
+    let baseFontSize = 16; // Default size for most browsers
+
+    function zoomIn() {
+        baseFontSize += 1; // Increase font size by 1px
+        updateFontSize();
+    }
+
+    function zoomOut() {
+        if (baseFontSize > 10) { // Minimum font size limit
+            baseFontSize -= 1; // Decrease font size by 1px
+            updateFontSize();
+        }
+    }
+
+    function resetZoom() {
+        baseFontSize = 16; // Reset font size to default
+        updateFontSize();
+    }
+
+    function updateFontSize() {
+        document.documentElement.style.fontSize = baseFontSize + 'px';
+        localStorage.setItem('zoomLevel', baseFontSize); // Save the current font size to local storage
+    }
+</script>
+
+<style>
+.zoom-controls button {
+    padding: 5px 10px;
+    margin: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.zoom-controls {
+    bottom: 10px;
+    right: 10px;
+    background: #f8f9fa;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+</style>

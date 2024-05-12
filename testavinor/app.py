@@ -1,8 +1,10 @@
 
-from flask import Flask, request, render_template, session, redirect, url_for, jsonify
+from flask import Flask, request, render_template, send_from_directory, session, redirect, url_for, jsonify, current_app
+from flask_caching import Cache
 from flask_session import Session
 import requests
 from xml.etree import ElementTree
+import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 import pytz
 from dateutil import parser, tz
@@ -10,7 +12,25 @@ import os
 from redis import Redis
 from flask_cors import CORS
 
-app = Flask(__name__)
+
+
+app = Flask(__name__, static_folder='static')
+# Cachers
+def set_cache_headers(response, max_age=31536000):  # Set max-age to one year
+    response.headers['Cache-Control'] = f'public, max-age={max_age}'
+    return response
+
+@app.route('/static/js/<path:filename>')
+def serve_js(filename):
+    response = send_from_directory(os.path.join(app.static_folder, 'js'), filename)
+    return set_cache_headers(response)
+
+@app.route('/static/manifest.json')
+def serve_manifest():
+    response = send_from_directory(app.static_folder, 'manifest.json')
+    return set_cache_headers(response)
+# End Cachers
+
 CORS(app)
 app.secret_key = os.urandom(24)  # Secure random key
 app.config['SESSION_TYPE'] = 'redis'
@@ -29,6 +49,8 @@ try:
 except Exception as e:
     print("Failed to connect or verify Redis:", e)
 # Redis session database
+
+
 
 def utc_to_local(utc_dt, local_zone):
     """Convert UTC datetime string to a datetime object in a local timezone."""
@@ -55,11 +77,11 @@ gate_numbers = {
     "B8": 171, "B7": 172, "B6": 173, "B5": 174, "B4": 175, "B3": 176, "B2": 177, "B1": 178,
     "A2": 28, "A4": 26, "A6": 24, "A8": 22, "A10": 20, "A12": 18, "A14": 16, "A15": 15, "A16": 14,
     "A18": 13, "A19": 13, "A20": 14, "A21": 11, "A22": 12, "A23": 9, "A24": 10, "A25": 7, "A26": 2, "A27": 3,
-    "D2": 60, "C2": 60, "D3": 62, "C3": 62, "D4": 64, "C4": 64, "D5": 66, "C5": 66, "D6": 68, "C6": 68,
-    "D7": 70, "C7": 70, "D8": 72, "C8": 72, "D9": 74, "C9": 74, "D10": 76, "C10": 76, "D11": 81, "C11": 81,
+    "D2": 60, "C2": 60, "D3": 65, "C3": 62, "D4": 64, "C4": 64, "D5": 69, "C5": 66, "D6": 68, "C6": 68,
+    "D7": 70, "C7": 70, "D8": 72, "C8": 72, "D9": 77, "C9": 74, "D1": 61, "C10": 76, "D11": 81, "C11": 81,
     "E2": 36, "E3": 37, "E4": 39, "E5": 39, "E6": 40, "E7": 40, "E8": 38, "E9": 48, "E10": 40, "E11": 41,
     "E12": 42, "E13": 43, "E14": 44, "E15": 45, "E16": 46, "E17": 47, "E18": 48, "E19": 49,
-    "F21": 51, "F23": 53
+    "F21": 51, "F33": 53, "F34": 58, "F32": 56, "F33": 53, "F12": 40, "F14": 44,
 }
 
 def get_flight_data(airport_code, direction, flight_type='A'):
@@ -69,7 +91,7 @@ def get_flight_data(airport_code, direction, flight_type='A'):
     active_flights = []
     archived_flights = []
     ongoing_flights = []
-    excluded_airlines = ['WF', 'SK', 'LH', 'DX', 'KL', 'OS', 'SIU']
+    excluded_airlines = ['WF', 'SK', 'LH', 'DX', 'KL', 'OS', 'SIU', 'OS']
 
     if response.status_code == 200:
         root = ElementTree.fromstring(response.content)
@@ -78,7 +100,7 @@ def get_flight_data(airport_code, direction, flight_type='A'):
             if airline in excluded_airlines:
                 continue
             dom_int = flight.find('dom_int').text if flight.find('dom_int') is not None else 'A'
-            if flight_type == 'x' and dom_int not in ['I', 'S']:  # Combined International and Schengen
+            if flight_type == 'x' and dom_int not in ['I', 'S']:
                 continue
             elif flight_type != 'A' and flight_type != 'x' and dom_int != flight_type:
                 continue
@@ -92,12 +114,21 @@ def get_flight_data(airport_code, direction, flight_type='A'):
             flight_id = flight.find('flight_id').text
             received_bags = session.get(flight_id, 0)
             status_code = flight.find('status').get('code') if flight.find('status') is not None else 'Scheduled'
+            airport_iata = flight.find('airport').text if flight.find('airport') is not None else 'Unknown'
             
             if hours_to_left == '00:00':
                 status_code = 'Time Out'
 
-            gate = flight.find('gate').text if flight.find('gate') is not None else 'N/A'
-            gate_number = gate_numbers.get(gate, 'N/A')
+            current_gate = flight.find('gate').text if flight.find('gate') is not None else 'N/A'
+            current_gate_number = gate_numbers.get(current_gate, 'N/A')
+            previous_gate = session.get(f'gate_{flight_id}', 'N/A')
+            previous_gate_number = session.get(f'gate_number_{flight_id}', 'N/A')
+            airport_name = fetch_airport_name(airport_iata) if received_bags > 0 else "Airport data not fetched"
+
+            # Determine if the gate has changed
+            gate_changed = (current_gate != previous_gate) and previous_gate != 'N/A'
+            session[f'gate_{flight_id}'] = current_gate  # Update the session with the current gate
+            session[f'gate_number_{flight_id}'] = current_gate_number  # Update the session with the current gate number
 
             flight_data = {
                 'flight_id': flight_id,
@@ -107,8 +138,12 @@ def get_flight_data(airport_code, direction, flight_type='A'):
                 'hours_to_left': hours_to_left,
                 'arr_dep': flight.find('arr_dep').text,
                 'airport': flight.find('airport').text,
-                'gate': gate,
-                'gate_number': gate_number,
+                'current_gate': current_gate,
+                'airport_name': airport_name,
+                'current_gate_number': current_gate_number,
+                'previous_gate': previous_gate,
+                'previous_gate_number': previous_gate_number,
+                'gate_changed': gate_changed,
                 'status': status_code,
                 'status_time': flight.find('status').get('time') if flight.find('status') is not None else 'No update',
                 'received_bags': received_bags
@@ -123,13 +158,39 @@ def get_flight_data(airport_code, direction, flight_type='A'):
 
     return {'active': active_flights, 'archived': archived_flights, 'ongoing': ongoing_flights}
 
+#Airport Names
+
+
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})
+
+def fetch_airport_name(iata_code):
+    cached_name = cache.get(iata_code)
+    if cached_name:
+        return cached_name
+    else:
+        url = f"http://flydata.avinor.no/airportNames.asp?airport={iata_code}"
+        response = requests.get(url)
+        if response.status_code == 200:
+            root = ET.fromstring(response.content)
+            airport_name = root.find('.//airportName').get('name') if root.find('.//airportName') is not None else 'Unknown Airport'
+            cache.set(iata_code, airport_name, timeout=86400)  # Cache for 24 hours
+            return airport_name
+        return "Unknown Airport"
 
 # Archive 
 @app.route('/archive')
 def archive():
     return render_template('archive.html')
-# Parking Functions 
 
+# Flask route in app.py
+@app.route('/flights/json')
+def flights_json():
+    airport_code = request.args.get('airport', 'OSL')
+    direction = request.args.get('direction', 'D')
+    flight_type = request.args.get('flight_type', 'A')
+    flights = get_flight_data(airport_code, direction, flight_type)
+    return jsonify(flights)
+# Parking Functions 
 @app.route('/park_baggage/<flight_id>', methods=['POST'])
 def park_baggage(flight_id):
     current_gate = request.form.get('current_gate')
@@ -168,8 +229,6 @@ def park_baggage(flight_id):
         }
 
     return jsonify(response)
-
-
 
 
 @app.route('/update_parking_visibility/<flight_id>', methods=['POST'])
